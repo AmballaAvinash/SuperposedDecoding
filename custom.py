@@ -81,7 +81,7 @@ alive_gens, _ = model.sup_generate(prompt_tokens=tokenized_prompts,
                                         n_drafts=n_drafts,
                                         i_weights=i_weights,
                                         i_length=i_length,
-                                        ngrams=ngrams,
+                                        ngrams=None,
                                         get_time=False,
                                         penalty=200)
 
