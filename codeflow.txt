@@ -15,3 +15,7 @@ custom.py: python version
 Superoposed
     LLAMA
         - metrics: perplexity, diversity and self BLEU
+        tokenizer:
+        model 
+        supoerpose
+        

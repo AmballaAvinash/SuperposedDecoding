@@ -73,7 +73,7 @@ tokenized_prompts = tokenizer.encode(prompts, True, False)
 
 
 alive_gens, _ = model.sup_generate(prompt_tokens=tokenized_prompts, 
-                                        smoothing="geom",
+                                        smoothing=None,
                                         max_gen_len=10, 
                                         n_token_sample=n_token_sample,
                                         alpha=alpha, 
@@ -85,7 +85,7 @@ alive_gens, _ = model.sup_generate(prompt_tokens=tokenized_prompts,
                                         get_time=False,
                                         penalty=200)
 
-
+print(alive_gens)
 gens = alive_gens[0].reshape(len(prompts) * n_drafts, -1)
 for i in gens:
     print(decode(tokenizer, i))

@@ -61,13 +61,14 @@ class Superpose(nn.Module):
         # Interpolation length and weights
         self.interpolation_weights = i_weights
         self.i_length = i_length
-        # N-grams
-        self.bigram = ngrams[0] if len(ngrams) >= 1 else None
-        self.trigram = ngrams[1] if len(ngrams) >= 2 else None
-        self.fourgram = ngrams[2] if len(ngrams) >= 3 else None
-        self.fivegram = ngrams[3] if len(ngrams) >= 4 else None
-        self.sixgram = ngrams[4] if len(ngrams) >= 5 else None
-        self.sevengram = ngrams[5] if len(ngrams) >= 6 else None
+        if self.smoothing is not None:
+            # N-grams
+            self.bigram = ngrams[0] if len(ngrams) >= 1 else None
+            self.trigram = ngrams[1] if len(ngrams) >= 2 else None
+            self.fourgram = ngrams[2] if len(ngrams) >= 3 else None
+            self.fivegram = ngrams[3] if len(ngrams) >= 4 else None
+            self.sixgram = ngrams[4] if len(ngrams) >= 5 else None
+            self.sevengram = ngrams[5] if len(ngrams) >= 6 else None
         # Timing
         self.get_time = get_time
         self.lookup_time = None
