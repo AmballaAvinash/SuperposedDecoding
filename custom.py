@@ -35,7 +35,7 @@ i_length = params["i_length"]
 
 
 
-weight_path = "7B/"
+weight_path = "7B/llama-2-7b"
 model = SuperposedLlama.build(ckpt_dir=weight_path, 
                          tokenizer_path=f'{weight_path}/tokenizer.model', 
                          max_seq_len=100, 

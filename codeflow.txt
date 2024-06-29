@@ -2,8 +2,8 @@
 
 
 
-custom.ipynb: Superposed Decoding on arbitrary prompts
+custom.ipynb: Superposed Decoding on arbitrary prompts, perplexit
 
-
+7B: model and tokenizer 
 
 custom.py: python version
