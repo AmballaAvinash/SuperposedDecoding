@@ -35,7 +35,8 @@ def evaluate_mixed_losses(data: List[List[str]],
                           ngrams = None,
                           get_time = False,
                           penalty = 200,
-                          marker = True):
+                          marker = True,
+                          get_model_probs: bool = False):
     """
     Generate `n_drafts` from `data` using the first `prompt_len` tokens as the
     prefix, generating until `max_gen_len` is reached. Returns the drafts
@@ -75,7 +76,7 @@ def evaluate_mixed_losses(data: List[List[str]],
         truncated_tokens = prepare_encodings(batch, tokenizer, prompt_len)
         
         # Inference
-        k = model.sup_generate(prompt_tokens=truncated_tokens, 
+        k, token_probs, ngram_probs1 = model.sup_generate(prompt_tokens=truncated_tokens, 
                                             smoothing=smoothing,
                                             max_gen_len=max_gen_len, 
                                             n_token_sample=n_token_sample,
@@ -86,7 +87,8 @@ def evaluate_mixed_losses(data: List[List[str]],
                                             i_length=i_length,
                                             ngrams=ngrams,
                                             get_time=get_time,
-                                            penalty=penalty)
+                                            penalty=penalty,
+                                            get_model_probs=get_model_probs)
         # Update returns
         if not get_time:
             (alive_seq, alive_ppl), (fin_seq, fin_ppl) = k
@@ -102,7 +104,10 @@ def evaluate_mixed_losses(data: List[List[str]],
         ppl[b_start : b_end, :] = top_ppl
         sequences[b_start : b_end, :, :] = top_seq
     if not get_time:    
-        return sequences, ppl
+        if not get_model_probs:
+            return sequences, ppl
+        else:
+            return sequences, ppl, token_probs, ngram_probs1
     else:
         return sequences, ppl, ovr_time
 

@@ -96,7 +96,8 @@ class SuperposedLlama:
         i_length = None,
         ngrams = None,
         get_time: bool = False,
-        penalty = 200
+        penalty = 200,
+        get_model_probs: bool = False
     ):
         """
         Run multi-sequence generation using superposed embeddings.
@@ -156,6 +157,9 @@ class SuperposedLlama:
         if verbose:
             state_list = []
         prev_pos = 0
+        
+        token_probs = torch.zeros(bsz,total_len-min_prompt_len,self.model.vocab_size)
+        ngram_prob_mtx = torch.zeros(bsz,total_len-min_prompt_len,n_drafts,self.model.vocab_size)
         # Begin inference
         for cur_pos in range(min_prompt_len, total_len):
             input_text_mask = tokens != pad_id
@@ -173,6 +177,7 @@ class SuperposedLlama:
                 probs = torch.softmax(logits[:, -1] / temp, dim=-1)
             else:
                 raise RuntimeError("Temperature must be greater than 0 while mixing")
+            token_probs[:,cur_pos-min_prompt_len,:] = probs
             if verbose:
                 states["end_probs"] = probs
                 state_list.append(states)
@@ -182,7 +187,8 @@ class SuperposedLlama:
             # Flag prompts not yet generating
             still_prompt = input_text_mask[:, cur_pos]
             # Superposition pass
-            token_weights = superpose(probs, still_prompt, is_first, cur_pos, n_token_sample)
+            token_weights, ngram_probs = superpose(probs, still_prompt, is_first, cur_pos, n_token_sample)
+            ngram_prob_mtx[:,cur_pos-min_prompt_len,:,:] = ngram_probs
             # Do not superpose for prompts not yet generating
             keep_idx = input_text_mask[:, cur_pos].ravel().nonzero()
             keep_token_weights = torch.zeros_like(token_weights)
@@ -195,4 +201,7 @@ class SuperposedLlama:
             torch.save(state_list, "../embeddings.pt")
             return results
         else:
-            return results
+            if get_model_probs:
+                return results, token_probs, ngram_prob_mtx
+            else:
+                return results

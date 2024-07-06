@@ -172,6 +172,7 @@ class Llama:
         assert max_prompt_len <= params.max_seq_len
         total_len = min(params.max_seq_len, max_gen_len + max_prompt_len)
 
+        token_probs = torch.zeros(bsz,total_len-min_prompt_len,self.model.vocab_size)
         pad_id = self.tokenizer.pad_id
         tokens = torch.full((bsz, total_len), pad_id, dtype=torch.long, device=self.device)
         for k, t in enumerate(prompt_tokens):
@@ -202,7 +203,8 @@ class Llama:
             logits = self.model.forward(tokens[:, prev_pos:cur_pos], prev_pos, False)
             if temperature > 0:
                 probs = torch.softmax(logits[:, -1] / temperature, dim=-1)
-                next_token = sample_top_p(probs, top_p)
+                next_token,probs_sort = sample_top_p(probs, top_p)
+                token_probs[:,cur_pos-min_prompt_len,:] = probs_sort
             else:
                 next_token = torch.argmax(logits[:, -1], dim=-1)
 
@@ -240,7 +242,7 @@ class Llama:
                 eos_idx = toks.index(self.tokenizer.eos_id)
                 probs = probs[:eos_idx] if logprobs else None
             out_ppl.append(torch.exp(-1 * torch.sum(torch.tensor(probs)) / len(probs)))
-        return tokens, torch.tensor(out_ppl) if logprobs else None
+        return tokens, torch.tensor(out_ppl), token_probs if logprobs else None
 
 def sample_top_p(probs, p, s=1):
     """
@@ -265,4 +267,5 @@ def sample_top_p(probs, p, s=1):
     probs_sort.div_(probs_sort.sum(dim=-1, keepdim=True))
     next_token = torch.multinomial(probs_sort, num_samples=s)
     next_token = torch.gather(probs_idx, -1, next_token)
-    return next_token
+    unsorted = probs_sort.gather(-1,probs_idx.argsort(-1))
+    return next_token, unsorted

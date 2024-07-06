@@ -37,6 +37,8 @@ i_length = params["i_length"]
 
 weight_path = "7B/llama-2-7b"
 token_path = "7B/"
+
+# loading transformer model (suitable for superposed generaeion) from checkooint
 model = SuperposedLlama.build(ckpt_dir=weight_path, 
                          tokenizer_path=f'{token_path}/tokenizer.model', 
                          max_seq_len=100, 
@@ -72,6 +74,7 @@ prompts = [
 tokenized_prompts = tokenizer.encode(prompts, True, False)
 
 
+# similar to model.generate in HF 
 alive_gens, _ = model.sup_generate(prompt_tokens=tokenized_prompts, 
                                         smoothing=None,
                                         max_gen_len=10, 
@@ -81,7 +84,7 @@ alive_gens, _ = model.sup_generate(prompt_tokens=tokenized_prompts,
                                         n_drafts=n_drafts,
                                         i_weights=i_weights,
                                         i_length=i_length,
-                                        ngrams=None,
+                                        ngrams=[],
                                         get_time=False,
                                         penalty=200)
 

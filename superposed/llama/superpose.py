@@ -60,15 +60,14 @@ class Superpose(nn.Module):
         self.gpu = torch.device('cuda')
         # Interpolation length and weights
         self.interpolation_weights = i_weights
-        self.i_length = i_length
-        if self.smoothing is not None:
-            # N-grams
-            self.bigram = ngrams[0] if len(ngrams) >= 1 else None
-            self.trigram = ngrams[1] if len(ngrams) >= 2 else None
-            self.fourgram = ngrams[2] if len(ngrams) >= 3 else None
-            self.fivegram = ngrams[3] if len(ngrams) >= 4 else None
-            self.sixgram = ngrams[4] if len(ngrams) >= 5 else None
-            self.sevengram = ngrams[5] if len(ngrams) >= 6 else None
+        self.i_length = i_length 
+        # N-grams
+        self.bigram = ngrams[0] if len(ngrams) >= 1 else None
+        self.trigram = ngrams[1] if len(ngrams) >= 2 else None
+        self.fourgram = ngrams[2] if len(ngrams) >= 3 else None
+        self.fivegram = ngrams[3] if len(ngrams) >= 4 else None
+        self.sixgram = ngrams[4] if len(ngrams) >= 5 else None
+        self.sevengram = ngrams[5] if len(ngrams) >= 6 else None
         # Timing
         self.get_time = get_time
         self.lookup_time = None
@@ -112,6 +111,7 @@ class Superpose(nn.Module):
                 ngram_probs = self.ngram_probs(self.alive_seq, cur_pos, probs=None)              
                 log_probs = torch.log(ngram_probs)
         else:
+            ngram_probs = None
             log_probs = torch.log(reshaped_probs)
         curr_log_probs = self.alive_log_probs.unsqueeze(dim=2) + log_probs # [n_prompts, n_drafts, vocab_size]
         # Warning if nan
@@ -145,7 +145,7 @@ class Superpose(nn.Module):
         # Create superposition matrix and return it
         topk_idx = self.alive_seq[:, :, cur_pos].reshape(self.n_prompts, -1)
         token_weights = self.superposition_matrix(topk_idx)
-        return token_weights
+        return token_weights, ngram_probs
         
     def grow_alive(self, topk_seq, topk_log_probs, topk_finished):
         """

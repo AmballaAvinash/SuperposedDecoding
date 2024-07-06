@@ -1,21 +1,37 @@
+7B: run download.sh files to create model and tokenizer 
 
-
-
-
-custom.ipynb: Superposed Decoding on arbitrary prompts, perplexit
-
-7B: model and tokenizer 
-
-custom.py: python version
+custom.py: python version og custom.ipynb
          torchrun custom.py
          
-         
-         
+diveristy_grader.py: DIVERSITY OF OUTPUTS USING SELF-BLEU         
+
+eval.py:  
+
+evaluate.ipynb:
+
+grader.py: 
+
+mturk.py:
+
+
+ngrams
+ - store n grams model here. 
+
+params .json files with decoding params.          
  
 Superoposed
     LLAMA
-        - metrics: perplexity, diversity and self BLEU
-        tokenizer:
-        model 
-        supoerpose
+        - metrics: perplexity, diversity and self BLEU    
+        - model: SuperposedTransformer forward pass implements token superposition using tokoen weights and compute the logits. 
+        - superposed_generation:
+            - sup_generate() calls Superpose() in superpose.py
+        - superpose.py: calucalte the superpostion matrix
+        -generation.py  normal text decoding 
+            
+    
+    ngrams
+        - 
         
+        
+    notebooks
+        - custom.ipynb: Superposed Decoding on arbitrary prompts, perplexit
