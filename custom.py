@@ -86,7 +86,8 @@ alive_gens, _ = model.sup_generate(prompt_tokens=tokenized_prompts,
                                         i_length=i_length,
                                         ngrams=[],
                                         get_time=False,
-                                        penalty=200)
+                                        penalty=200,
+                                        get_model_probs=False)
 
 print(alive_gens)
 gens = alive_gens[0].reshape(len(prompts) * n_drafts, -1)
