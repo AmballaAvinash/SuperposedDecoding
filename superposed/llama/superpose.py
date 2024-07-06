@@ -261,17 +261,17 @@ class Superpose(nn.Module):
                             if cur_pos - i >= 0:
                                 key = tuple(alive_seq[p_idx, draft_idx, cur_pos-i:cur_pos].tolist())
                                 if i == 1:
-                                    prob = self.bigram.prob(key, nt)
+                                    prob = self.bigram.prob(key, nt) if self.bigram!= None else 0
                                 elif i == 2:
-                                    prob = self.trigram.prob(key, nt)
+                                    prob = self.trigram.prob(key, nt) if self.bigram!= None else 0
                                 elif i == 3:
-                                    prob = self.fourgram.prob(key, nt)
+                                    prob = self.fourgram.prob(key, nt) if self.bigram!= None else 0
                                 elif i == 4:
-                                    prob = self.fivegram.prob(key, nt)
+                                    prob = self.fivegram.prob(key, nt) if self.bigram!= None else 0
                                 elif i == 5:
-                                    prob = self.sixgram.prob(key, nt)
+                                    prob = self.sixgram.prob(key, nt) if self.bigram!= None else 0
                                 elif i == 6:
-                                    prob = self.sevengram.prob(key, nt)
+                                    prob = self.sevengram.prob(key, nt) if self.bigram!= None else 0
                             if prob >= 0:
                                 next_token_probs[p_idx, draft_idx, nt] += weight * prob
         else:
@@ -284,17 +284,17 @@ class Superpose(nn.Module):
                         if cur_pos - i >= 0:
                             key = tuple(alive_seq[p_idx, draft_idx, cur_pos-i:cur_pos].tolist())
                             if i == 1:
-                                ntd = self.bigram.ntd(key)
+                                ntd = self.bigram.ntd(key) if self.bigram!= None else 0
                             elif i == 2:
-                                ntd = self.trigram.ntd(key)
+                                ntd = self.trigram.ntd(key) if self.bigram!= None else 0
                             elif i == 3:
-                                ntd = self.fourgram.ntd(key)
+                                ntd = self.fourgram.ntd(key) if self.bigram!= None else 0
                             elif i == 4:
-                                ntd = self.fivegram.ntd(key)
+                                ntd = self.fivegram.ntd(key) if self.bigram!= None else 0
                             elif i == 5:
-                                ntd = self.sixgram.ntd(key)
+                                ntd = self.sixgram.ntd(key) if self.bigram!= None else 0
                             elif i == 6:
-                                ntd = self.sevengram.ntd(key)
+                                ntd = self.sevengram.ntd(key) if self.bigram!= None else 0
                         if ntd is not None:
                             next_token_probs[p_idx, draft_idx, :] += weight * ntd
         if self.get_time:    
