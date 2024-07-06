@@ -177,7 +177,8 @@ class SuperposedLlama:
                 probs = torch.softmax(logits[:, -1] / temp, dim=-1)
             else:
                 raise RuntimeError("Temperature must be greater than 0 while mixing")
-            token_probs[:,cur_pos-min_prompt_len,:] = probs
+            if get_model_probs:
+                token_probs[:,cur_pos-min_prompt_len,:] = probs
             if verbose:
                 states["end_probs"] = probs
                 state_list.append(states)
@@ -188,7 +189,8 @@ class SuperposedLlama:
             still_prompt = input_text_mask[:, cur_pos]
             # Superposition pass
             token_weights, ngram_probs = superpose(probs, still_prompt, is_first, cur_pos, n_token_sample)
-            ngram_prob_mtx[:,cur_pos-min_prompt_len,:,:] = ngram_probs
+            if get_model_probs:
+                ngram_prob_mtx[:,cur_pos-min_prompt_len,:,:] = ngram_probs
             # Do not superpose for prompts not yet generating
             keep_idx = input_text_mask[:, cur_pos].ravel().nonzero()
             keep_token_weights = torch.zeros_like(token_weights)
