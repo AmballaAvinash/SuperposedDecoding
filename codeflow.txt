@@ -25,7 +25,7 @@ Superoposed
         - model: SuperposedTransformer forward pass implements token superposition using tokoen weights and compute the logits. 
         - superposed_generation:
             - sup_generate() calls Superpose() in superpose.py
-        - superpose.py: calucalte the superpostion matrix
+        - superpose.py: calucalte the superpostion matrix and ngram interpolations
         -generation.py  normal text decoding 
             
     

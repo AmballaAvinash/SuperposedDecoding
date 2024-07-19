@@ -137,6 +137,7 @@ class Llama:
         self,
         prompt_tokens: List[List[int]],
         max_gen_len: int,
+        beam_size: int = 5,
         temperature: float = 0.6,
         top_p: float = 0.9,
         logprobs: bool = True,
@@ -172,16 +173,20 @@ class Llama:
         assert max_prompt_len <= params.max_seq_len
         total_len = min(params.max_seq_len, max_gen_len + max_prompt_len)
 
-        token_probs = torch.zeros(bsz,total_len-min_prompt_len,self.model.vocab_size)
+        # token_probs = torch.zeros(bsz,total_len-min_prompt_len,self.model.vocab_size)
+        
         pad_id = self.tokenizer.pad_id
-        tokens = torch.full((bsz, total_len), pad_id, dtype=torch.long, device=self.device)
+        tokens = torch.full((bsz,beam_size, total_len), pad_id, dtype=torch.long, device=self.device)
         for k, t in enumerate(prompt_tokens):
-            tokens[k, : len(t)] = torch.tensor(t, dtype=torch.long, device=self.device)
+            tokens[k, :, :len(t)] = torch.tensor(t, dtype=torch.long, device=self.device).unsqueeze(0).repeat(beam_size, 1)
+            
         if logprobs:
             token_logprobs = torch.zeros_like(tokens, dtype=torch.float)
+            
         prev_pos = 0
-        eos_reached = torch.tensor([False] * bsz, device=self.device)
+        eos_reached = torch.tensor([False] * bsz * beam_size, device=self.device)
         input_text_mask = tokens != pad_id
+        
         if grade:
             pad_mask = tokens == pad_id
             tokens = torch.where(tokens == pad_id, 0, tokens)
@@ -199,34 +204,70 @@ class Llama:
             #    print(token_logprobs)
             return token_logprobs
 
+        beam_scores = torch.zeros((bsz, beam_size), device=self.device)
+        beam_scores[:, 1:] = -1e9
+        
         for cur_pos in range(min_prompt_len, total_len):
-            logits = self.model.forward(tokens[:, prev_pos:cur_pos], prev_pos, False)
+            logits = self.model.forward(tokens[:,:, prev_pos:cur_pos].view(bsz * beam_size, -1), prev_pos, False)
+            logits = logits.view(bsz, beam_size, -1, self.model.vocab_size)
+            
             if temperature > 0:
-                probs = torch.softmax(logits[:, -1] / temperature, dim=-1)
-                next_token,probs_sort = sample_top_p(probs, top_p)
-                token_probs[:,cur_pos-min_prompt_len,:] = probs_sort
+                probs = torch.softmax(logits[:,:, -1] / temperature, dim=-1)
+                next_tokens, next_token_probs = sample_top_p(probs, top_p)
+                next_token_scores = next_token_probs.log()
+                # token_probs[:,cur_pos-min_prompt_len,:] = probs_sort
+                
             else:
-                next_token = torch.argmax(logits[:, -1], dim=-1)
+                # next_token = torch.argmax(logits[:, -1], dim=-1)
+                next_token_scores, next_tokens = torch.topk(logits[:, :, -1], beam_size, dim=-1)
 
-            next_token = next_token.reshape(-1)
-            # only replace token if prompt has already been generated
-            next_token = torch.where(
-                input_text_mask[:, cur_pos], tokens[:, cur_pos], next_token
-            )
-            tokens[:, cur_pos] = next_token
+
+            # next_token = next_token.reshape(-1)
+            next_token_scores = next_token_scores.view(bsz, -1)
+            next_tokens = next_tokens.view(bsz, -1)
+            
+            total_scores = next_token_scores + beam_scores[:, :, None]
+            total_scores = total_scores.view(bsz, -1)
+            beam_scores, indices = torch.topk(total_scores, beam_size, dim=-1)
+
+            beam_indices = indices // self.model.vocab_size
+            token_indices = indices % self.model.vocab_size
+
+            tokens = tokens.view(bsz, beam_size, -1)
+            tokens = tokens[torch.arange(bsz)[:, None], beam_indices]
+            tokens[:, :, cur_pos] = token_indices
+
             if logprobs:
-                token_logprobs[:, prev_pos + 1 : cur_pos + 1] = -F.cross_entropy(
-                    input=logits.transpose(1, 2),
-                    target=tokens[:, prev_pos + 1 : cur_pos + 1],
-                    reduction="none",
-                    ignore_index=pad_id,
-                )                
-            eos_reached |= (~input_text_mask[:, cur_pos]) & (
-                next_token == self.tokenizer.eos_id
-            )
-            prev_pos = cur_pos
-            if all(eos_reached):
+                token_logprobs = token_logprobs.view(bsz, beam_size, -1)
+                token_logprobs = token_logprobs[torch.arange(bsz)[:, None], beam_indices]
+                token_logprobs[:, :, cur_pos] = next_token_scores[torch.arange(bsz)[:, None], beam_indices]
+
+            eos_reached |= (token_indices == self.tokenizer.eos_id)
+            if all(eos_reached.view(-1)):
                 break
+
+            prev_pos = cur_pos
+            
+            
+            # # only replace token if prompt has already been generated
+            # next_token = torch.where(
+            #     input_text_mask[:, cur_pos], tokens[:, cur_pos], next_token
+            # )
+            # tokens[:, cur_pos] = next_token
+            
+            # if logprobs:
+            #     token_logprobs[:, prev_pos + 1 : cur_pos + 1] = -F.cross_entropy(
+            #         input=logits.transpose(1, 2),
+            #         target=tokens[:, prev_pos + 1 : cur_pos + 1],
+            #         reduction="none",
+            #         ignore_index=pad_id,
+            #     )                
+            # eos_reached |= (~input_text_mask[:, cur_pos]) & (
+            #     next_token == self.tokenizer.eos_id
+            # )
+            # prev_pos = cur_pos
+            # if all(eos_reached):
+            #     break
 
         # seq_len = torch.sum(tokens != pad_id, dim=1)
         # return tokens, torch.exp(-1 * torch.sum(logprobs, dim=1) / (seq_len - prompt_len)), torch.exp(-1 * torch.sum(custom_logprobs, dim=1) / )
@@ -242,7 +283,7 @@ class Llama:
                 eos_idx = toks.index(self.tokenizer.eos_id)
                 probs = probs[:eos_idx] if logprobs else None
             out_ppl.append(torch.exp(-1 * torch.sum(torch.tensor(probs)) / len(probs)))
-        return tokens, torch.tensor(out_ppl), token_probs if logprobs else None
+        return tokens, torch.tensor(out_ppl), token_logprobs if logprobs else None
 
 def sample_top_p(probs, p, s=1):
     """
