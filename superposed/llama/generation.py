@@ -245,7 +245,7 @@ class Llama:
             if logprobs:
                 token_logprobs = token_logprobs.view(bsz, beam_size, -1)
                 token_logprobs = token_logprobs[torch.arange(bsz)[:, None], beam_indices]
-                token_logprobs[:, :, cur_pos] = next_token_scores[torch.arange(bsz)[:, None], beam_indices]
+                token_logprobs[:, :, prev_pos + 1 : cur_pos + 1] = next_token_scores[torch.arange(bsz)[:, None], beam_indices, prev_pos + 1 : cur_pos + 1]
 
             eos_reached |= (token_indices == self.tokenizer.eos_id)
             if all(eos_reached.view(-1)):
