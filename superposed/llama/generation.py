@@ -209,7 +209,7 @@ class Llama:
         
         for cur_pos in range(min_prompt_len, total_len):
             logits = self.model.forward(tokens[:,:, prev_pos:cur_pos].view(bsz * beam_size, -1), prev_pos, False)
-            logits = logits.view(bsz, beam_size, self.model.vocab_size)
+            logits = logits.view(bsz, beam_size, -1, self.model.vocab_size)
             
             if temperature > 0:
                 probs = torch.softmax(logits[:,:, -1] / temperature, dim=-1)
