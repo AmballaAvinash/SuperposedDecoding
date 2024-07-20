@@ -213,6 +213,7 @@ class Llama:
             
             if temperature > 0:
                 probs = torch.softmax(logits[:,:, -1] / temperature, dim=-1)
+                print(probs.shape)
                 next_tokens, next_token_probs = sample_top_p(probs, top_p)
                 next_token_scores = next_token_probs.log()
                 # token_probs[:,cur_pos-min_prompt_len,:] = probs_sort
@@ -306,6 +307,7 @@ def sample_top_p(probs, p, s=1):
     mask = probs_sum - probs_sort > p
     probs_sort[mask] = 0.0
     probs_sort.div_(probs_sort.sum(dim=-1, keepdim=True))
+    print(probs_sort.shape)
     next_token = torch.multinomial(probs_sort, num_samples=s)
     next_token = torch.gather(probs_idx, -1, next_token)
     unsorted = probs_sort.gather(-1,probs_idx.argsort(-1))
