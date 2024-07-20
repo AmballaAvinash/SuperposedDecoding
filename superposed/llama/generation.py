@@ -235,6 +235,8 @@ class Llama:
 
             beam_indices = indices // self.model.vocab_size
             token_indices = indices % self.model.vocab_size
+            
+            print(beam_indices)
 
             tokens = tokens.view(bsz, beam_size, -1)
             tokens = tokens[torch.arange(bsz)[:, None], beam_indices]
