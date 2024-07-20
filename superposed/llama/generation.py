@@ -205,7 +205,7 @@ class Llama:
             return token_logprobs
 
         beam_scores = torch.zeros((bsz, beam_size), device=self.device)
-        beam_scores[:, 1:] = -1e9
+        beam_scores[:, 1:] = -1e4
         
         for cur_pos in range(min_prompt_len, total_len):
             logits = self.model.forward(tokens[:,:, prev_pos:cur_pos].view(bsz * beam_size, -1), prev_pos, False)
