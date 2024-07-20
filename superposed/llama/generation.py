@@ -224,8 +224,8 @@ class Llama:
 
 
             # next_token = next_token.reshape(-1)
-            next_token_scores = next_token_scores.view(bsz, -1)
-            next_tokens = next_tokens.view(bsz, -1)
+            next_token_scores = next_token_scores.view(bsz, beam_size,-1)
+            next_tokens = next_tokens.view(bsz, beam_size, -1)
             
             print(next_token_scores.shape)
             
