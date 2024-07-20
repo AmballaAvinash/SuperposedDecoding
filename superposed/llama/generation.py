@@ -227,7 +227,9 @@ class Llama:
             next_token_scores = next_token_scores.view(bsz, -1)
             next_tokens = next_tokens.view(bsz, -1)
             
-            total_scores = next_token_scores + beam_scores
+            print(next_token_scores.shape)
+            
+            total_scores = next_token_scores + beam_scores[:, :, None]
             total_scores = total_scores.view(bsz, -1)
             beam_scores, indices = torch.topk(total_scores, beam_size, dim=-1)
 
