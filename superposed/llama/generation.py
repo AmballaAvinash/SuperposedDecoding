@@ -251,7 +251,7 @@ class Llama:
             
             print(token_indices.shape)
             
-            print(self.tokenizer.eos_id.shape)
+            print(self.tokenizer.eos_id)
             
             eos_reached |= (token_indices == self.tokenizer.eos_id).view(bsz*beam_size)
             if all(eos_reached.view(-1)):
