@@ -253,7 +253,7 @@ class Llama:
             
             print(self.tokenizer.eos_id.shape)
             
-            eos_reached |= (token_indices == self.tokenizer.eos_id).view(bsz, beam_size)
+            eos_reached |= (token_indices == self.tokenizer.eos_id).view(bsz*beam_size)
             if all(eos_reached.view(-1)):
                 break
 
