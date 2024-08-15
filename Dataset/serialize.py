@@ -73,7 +73,7 @@ def deserialize_tree(k, d, filename):
 # k = 3 (branching factor), d = 1 (depth), and the nodes contain the payloads (float16, uint16, is_leaf)
 
 # level order traversal since it is complete and full tree
-nodes = [(1.1, 10, 0), (2.2, 20, 0), (3.3, 30, 1), (4.4, 40, 1)]
-serialize_tree(3, 1, nodes, 'Dataset/tree_data.bin')
-deserialized_nodes = deserialize_tree(3, 1, 'Dataset/tree_data.bin')
-print(deserialized_nodes)
+# nodes = [(1.1, 10, 0), (2.2, 20, 0), (3.3, 30, 1), (4.4, 40, 1)]
+# serialize_tree(3, 1, nodes, 'Dataset/tree_data.bin')
+# deserialized_nodes = deserialize_tree(3, 1, 'Dataset/tree_data.bin')
+# print(deserialized_nodes)
